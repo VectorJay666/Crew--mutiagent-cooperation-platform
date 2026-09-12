@@ -25,8 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <body className={`${syne.variable} ${figtree.variable} antialiased`}>
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body
+        className={`${syne.variable} ${figtree.variable} antialiased`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
