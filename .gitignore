@@ -1,0 +1,8 @@
+﻿agent-tools/
+*.tar.gz
+handoff-structure/
+.DS_Store
+node_modules/
+.next/
+.env
+.env.local
