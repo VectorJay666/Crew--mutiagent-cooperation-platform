@@ -189,4 +189,4 @@ status → speaker → token* → message_done → (handoff | activity) → done
 - [ ] **Stop 取消 fetch**：发送中点停止，客户端出现 aborted fetch，不再追加 token；成员 status 回到 idle。
 - [ ] `contracts/types.ts` ↔ `web/src/lib/types.ts`、`contracts/api.ts` ↔ `web/src/lib/contract.ts` 的共享字段无静默漂移（允许镜像多 `USE_BACKEND` / `AppState`）。
 
-前端安装步骤与用户向故障排查见仓库根 [README.md](../README.md)。
+前端安装步骤与用户向故障排查见仓库根 [README.md](../README.md)。评审录屏节拍 / 口播：[demo/STORYBOARD.md](../demo/STORYBOARD.md)。
