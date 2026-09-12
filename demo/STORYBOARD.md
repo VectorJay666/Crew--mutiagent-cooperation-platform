@@ -15,7 +15,7 @@
 | | |
 |--|--|
 | **操作** | 打开 http://localhost:3000。不要先点「新建 Bot / 新建群组」。 |
-| **画面** | 左栏 **Crew** +「多智能体协作工作台」；列表最上是群组 **Product Launch**（Users 图标），下面是 **Nova**（置顶针）· Chief of Staff、**Rex** · Engineer、**Mira** · Designer、**Kai** · Researcher。中间默认 Product Launch：大标题 +「像给同事发消息一样布置任务…」。底栏输入框，右侧是 **纸飞机（发送）**。 |
+| **画面** | 左栏 **Crew** +「多智能体协作工作台」。花名册**置顶是 Nova**（针标 · Chief of Staff），接着是群组 **Product Launch**（Users 图标），再往下 **Rex** · Engineer、**Mira** · Designer、**Kai** · Researcher。中间对话默认已是 Product Launch（空状态大标题是群组名 +「像给同事发消息一样布置任务…」）。底栏输入框，右侧是 **纸飞机（发送）**。 |
 | **证明** | 工作台已就位：花名册 + 群组对话，不是空白概念页。 |
 
 ## Beat 2 · 发任务（0:15–0:30）

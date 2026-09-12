@@ -25,7 +25,10 @@ npm run dev
 - 左栏标题 **Crew**，副标题「多智能体协作工作台」
 - 标题旁 **齿轮**（`aria-label="Settings"`）
 - 花名册默认群组 **Product Launch**（Nova / Rex / Mira / Kai），以及置顶的 **Nova · Chief of Staff**
-- 中间默认就是 Product Launch 对话；空状态大标题是群组名，输入框占位「给 Product Launch 布置任务，用 @ 点名…」
+- 花名册**置顶是 Nova**（针标），下一行才是群组 **Product Launch**；中间对话默认已打开该群组
+- 空状态大标题是群组名，输入框占位「给 Product Launch 布置任务，用 @ 点名…」
+
+若浏览器里已有 `localStorage` 键 `crew-bot-store-v1`（以前玩过），花名册/默认对话可能不是种子状态。录屏前清该站点数据，或点对话顶栏垃圾桶「清空对话」。
 
 ## Mock vs 真实后端
 
