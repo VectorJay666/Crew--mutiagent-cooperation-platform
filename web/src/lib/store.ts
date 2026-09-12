@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { BOT_COLORS, DEFAULT_BOTS } from "./avatars";
+import { DEFAULT_GROUPS, DEFAULT_LLM_MODEL } from "./seed";
 import type {
   ApiSettings,
   AppState,
@@ -30,24 +31,25 @@ function seedBots(): Bot[] {
   }));
 }
 
-function seedGroup(bots: Bot[]): { group: Group; thread: Thread } {
-  const group: Group = {
-    id: "group_1",
-    name: "Product Launch",
-    botIds: bots.slice(0, 4).map((b) => b.id),
-    createdAt: Date.now(),
-  };
-  const thread: Thread = {
+function seedGroups(): { groups: Group[]; threads: Thread[] } {
+  const now = Date.now();
+  const groups: Group[] = DEFAULT_GROUPS.map((g, i) => ({
+    id: g.id,
+    name: g.name,
+    botIds: [...g.botIds],
+    createdAt: now - (DEFAULT_GROUPS.length - i) * 1000,
+  }));
+  const threads: Thread[] = groups.map((group, i) => ({
     id: groupThreadId(group.id),
-    type: "group",
+    type: "group" as const,
     targetId: group.id,
-    updatedAt: Date.now(),
-  };
-  return { group, thread };
+    updatedAt: now - i * 1000,
+  }));
+  return { groups, threads };
 }
 
 const seeded = seedBots();
-const seededGroup = seedGroup(seeded);
+const seededGroups = seedGroups();
 const botThreads: Thread[] = seeded.map((b) => ({
   id: botThreadId(b.id),
   type: "bot" as const,
@@ -58,7 +60,7 @@ const botThreads: Thread[] = seeded.map((b) => ({
 const defaultSettings: ApiSettings = {
   baseUrl: "https://api.openai.com/v1",
   apiKey: "",
-  model: "gpt-4o-mini",
+  model: DEFAULT_LLM_MODEL,
   temperature: 0.7,
 };
 
@@ -92,11 +94,11 @@ export const useAppStore = create<Store>()(
   persist(
     (set, get) => ({
       bots: seeded,
-      groups: [seededGroup.group],
-      threads: [...botThreads, seededGroup.thread],
+      groups: seededGroups.groups,
+      threads: [...botThreads, ...seededGroups.threads],
       messages: [],
       settings: defaultSettings,
-      activeThreadId: seededGroup.thread.id,
+      activeThreadId: groupThreadId("group_1"),
       hydrated: false,
 
       setHydrated: (v) => set({ hydrated: v }),

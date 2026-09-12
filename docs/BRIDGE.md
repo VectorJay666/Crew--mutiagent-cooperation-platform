@@ -38,7 +38,7 @@ NEXT_PUBLIC_USE_BACKEND=false
 |------|------|
 | `LLM_BASE_URL` | 默认 `https://api.openai.com/v1` |
 | `LLM_API_KEY` | 服务端默认 Key |
-| `LLM_MODEL` | 默认 `gpt-4o-mini` |
+| `LLM_MODEL` | 默认 `DeepSeek-V4-Flash-Vision-Exp` |
 | `LLM_TEMPERATURE` | 默认 `0.7` |
 
 UI Settings 保存在浏览器 Zustand。`ChatPanel` 发流时把 `settings` 放进请求体；后端 `resolveSettings()`：**请求体优先，缺项再用服务端 store / 上述 env**。Settings 弹窗**不会**自动 `PUT /api/settings`。
@@ -157,7 +157,7 @@ status → speaker → token* → message_done → (handoff | activity) → done
 2. 不要只改镜像。Cons 验收时 diff 这两对文件。
 3. **禁止**在未发新契约时把 `CONTRACT_VERSION` 改成非 `0.1.0`。
 4. 前端独占逻辑（mock、Zustand、`USE_BACKEND`）可以留在镜像；不要反向写进 `contracts/`。
-5. `STORE_PERSIST_KEY`（`crew-bot-store-v1`）与契约绑定；改 key 等于破坏用户本地数据，需升契约版本（当前不要做）。
+5. `STORE_PERSIST_KEY`（`crew-bot-store-v2`）控制 Zustand 本地缓存。v2 用于在不升 `CONTRACT_VERSION` 的前提下重种 Grok Bot 花名册；改 key 会丢掉浏览器里旧的 bots/对话。
 
 ---
 

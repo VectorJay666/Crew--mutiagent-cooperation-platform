@@ -80,8 +80,8 @@ export interface ApiSettings {
   temperature: number;
 }
 
-/** Persist key for Zustand — do not change without bumping CONTRACT_VERSION */
-export const STORE_PERSIST_KEY = "crew-bot-store-v1" as const;
+/** Persist key for Zustand. v2 reseeds the Grok Bot roster; CONTRACT_VERSION stays 0.1.0. */
+export const STORE_PERSIST_KEY = "crew-bot-store-v2" as const;
 
 export function botThreadId(botId: string): string {
   return `thread_${botId}`;
