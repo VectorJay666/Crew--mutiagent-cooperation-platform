@@ -219,23 +219,23 @@ code {
 
 .stream-caret {
   display: inline-block;
-  width: 1.5px;
-  height: 0.92em;
-  margin-left: 2px;
-  margin-bottom: -0.14em;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 3px;
+  margin-bottom: -0.16em;
   vertical-align: baseline;
   border-radius: 1px;
-  background: currentColor;
-  opacity: 0.55;
-  animation: stream-caret 0.7s ease-in-out infinite;
+  background: var(--accent);
+  box-shadow: -5px 0 8px -1px rgba(27, 143, 104, 0.28);
+  animation: stream-caret 0.65s ease-in-out infinite;
 }
 
 @keyframes stream-caret {
   0%,
   100% {
-    opacity: 0.18;
+    opacity: 0.22;
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.88;
   }
 }
