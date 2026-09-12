@@ -13,7 +13,7 @@
 ## 前端职责
 
 - UI：花名册 / 群组 / ChatPanel / Settings / AppShell
-- 本地 Zustand（persist: `crew-bot-store-v1`）
+- 本地 Zustand（persist: `crew-bot-store-v2`）
 - 客户端 `src/lib/api.ts`（mock SSE 或请求后端）
 - **不实现** `src/app/api/**`（后端独占）
 

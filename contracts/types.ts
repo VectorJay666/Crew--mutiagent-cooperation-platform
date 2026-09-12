@@ -78,7 +78,7 @@ export interface ApiSettings {
   temperature: number;
 }
 
-export const STORE_PERSIST_KEY = "crew-bot-store-v1" as const;
+export const STORE_PERSIST_KEY = "crew-bot-store-v2" as const;
 
 export function botThreadId(botId: string): string {
   return `thread_${botId}`;

@@ -22,7 +22,7 @@
 
 | 套壳常见样子 | Crew 钉住的 |
 |--------------|-------------|
-| 一个对话框换人设 | **花名册 + 群组**：点 Bot 或 Product Launch 这类团队再派活 |
+| 一个对话框换人设 | **花名册 + 群组**：点 Bot 或竞赛项目组这类团队再派活 |
 | 交接写在文档里 | 对话里可见 **handoff / routing**（活动条、交接条） |
 | Mock 一套、真后端另一套协议 | **同一套 SSE**，只换开关 |
 | 「停止」只是按钮变灰 | 点停真 **abort** 这次 fetch（验收 **M-STOP**） |
@@ -91,7 +91,7 @@ npm run dev
    - **API Key**：你的密钥（`sk-...` 或供应商提供的 key）
    - **Model**：如 `DeepSeek-V4-Flash-Vision-Exp`。LiteLLM 可用模型会变；当前建议默认该 id，不通再换列表里别的。
    - **Temperature**：可选，默认 `0.7`
-   - 点 **保存**。配置写入浏览器本地 Zustand（key：`crew-bot-store-v1`），发消息时随 `POST /api/chat/stream` 的 `settings` 传给后端。
+   - 点 **保存**。配置写入浏览器本地 Zustand（key：`crew-bot-store-v2`），发消息时随 `POST /api/chat/stream` 的 `settings` 传给后端。
 
 4. 也可在 `.env.local` 写服务端兜底（请求体没带齐时用）：`LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` / `LLM_TEMPERATURE`。
 
@@ -156,6 +156,6 @@ npm run dev
 | SSE 断流、回复停在半句 | 点停止、刷新、网络抖动或代理超时都可能掐流。点停止会 abort fetch，属预期。重发一条即可。长回复若经反向代理，需加大 read timeout。 |
 | `GET /api/health` 失败 | 先确认 `npm run dev` 已起来且端口是 **3000**。health 不依赖 API Key。 |
 | Mock / 后端行为对不上 | 看 `web/.env.local` 的 `NEXT_PUBLIC_USE_BACKEND`。`false` 或不存在 = Mock；只有字符串 `true` 才走后端。 |
-| 设置保存后刷新还在 | 正常：存在 `localStorage` 的 `crew-bot-store-v1`。清站点数据会丢掉 bots / 对话 / settings。 |
+| 设置保存后刷新还在 | 正常：存在 `localStorage` 的 `crew-bot-store-v2`。清站点数据会丢掉 bots / 对话 / settings。 |
 
 更细的衔接说明与 Cons 验收清单见 [docs/BRIDGE.md](docs/BRIDGE.md)。

@@ -205,11 +205,11 @@ function pickSpeakers(members: Bot[], content: string): Bot[] {
   const lower = content.toLowerCase();
   const scored = members.map((b) => {
     let score = 0;
-    if (/chief|staff/i.test(b.title) || b.name === "Nova") score += 2;
+    if (/chief|staff|管理统筹/i.test(b.title) || b.name === "Vector") score += 2;
     if (/design|ui|ux|视觉|界面/.test(lower) && /design/i.test(b.title)) score += 5;
     if (/code|engineer|api|后端|前端|架构/.test(lower) && /engineer/i.test(b.title)) score += 5;
     if (/research|分析|调研|竞品/.test(lower) && /research/i.test(b.title)) score += 5;
-    if (/plan|协调|安排|总结|团队/.test(lower) && /chief|staff/i.test(b.title)) score += 4;
+    if (/plan|协调|安排|总结|团队/.test(lower) && /chief|staff|管理统筹/i.test(b.title)) score += 4;
     return { b, score };
   });
   scored.sort((a, c) => c.score - a.score);

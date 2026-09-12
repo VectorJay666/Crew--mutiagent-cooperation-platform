@@ -8,6 +8,7 @@ import type {
   Thread,
 } from "../types";
 import type { CreateBotInput } from "../contract";
+import { DEFAULT_BOTS, DEFAULT_GROUPS, DEFAULT_LLM_MODEL } from "../seed";
 
 const BOT_COLORS: BotColor[] = [
   "teal",
@@ -20,51 +21,9 @@ const BOT_COLORS: BotColor[] = [
   "slate",
 ];
 
-const DEFAULT_BOT_DEFS = [
-  {
-    name: "Nova",
-    title: "Chief of Staff",
-    description:
-      "Routes work, keeps the team aligned, and escalates decisions to you.",
-    systemPrompt:
-      "You are Nova, Chief of Staff. Coordinate specialists, summarize status, and ask the user only when judgment is required. Be concise and action-oriented.",
-    color: "teal" as BotColor,
-    accessory: 0,
-  },
-  {
-    name: "Rex",
-    title: "Engineer",
-    description:
-      "Turns requirements into concrete technical plans, code sketches, and tradeoffs.",
-    systemPrompt:
-      "You are Rex, a pragmatic engineer. Prefer clear architecture, small steps, and explicit assumptions. When uncertain, list options with a recommendation.",
-    color: "sky" as BotColor,
-    accessory: 1,
-  },
-  {
-    name: "Mira",
-    title: "Designer",
-    description: "Shapes product narrative, UX structure, and visual direction.",
-    systemPrompt:
-      "You are Mira, a product designer. Focus on clarity, hierarchy, and user flow. Propose concrete UI copy and layout ideas without fluff.",
-    color: "rose" as BotColor,
-    accessory: 2,
-  },
-  {
-    name: "Kai",
-    title: "Researcher",
-    description:
-      "Gathers context, compares options, and surfaces risks with sources of uncertainty.",
-    systemPrompt:
-      "You are Kai, a researcher-analyst. Structure findings, call out unknowns, and keep recommendations evidence-based and compact.",
-    color: "amber" as BotColor,
-    accessory: 3,
-  },
-];
-
 function seedBots(): Bot[] {
   const now = Date.now();
-  return DEFAULT_BOT_DEFS.map((b, i) => ({
+  return DEFAULT_BOTS.map((b, i) => ({
     id: `bot_${i + 1}`,
     name: b.name,
     title: b.title,
@@ -74,42 +33,43 @@ function seedBots(): Bot[] {
     accessory: b.accessory,
     status: "idle" as const,
     pinned: i === 0,
-    createdAt: now - (DEFAULT_BOT_DEFS.length - i) * 1000,
+    createdAt: now - (DEFAULT_BOTS.length - i) * 1000,
   }));
 }
 
 function createInitialState() {
   const bots = seedBots();
-  const group: Group = {
-    id: "group_1",
-    name: "Product Launch",
-    botIds: bots.slice(0, 4).map((b) => b.id),
-    createdAt: Date.now(),
-  };
-  const groupThread: Thread = {
+  const now = Date.now();
+  const groups: Group[] = DEFAULT_GROUPS.map((g, i) => ({
+    id: g.id,
+    name: g.name,
+    botIds: [...g.botIds],
+    createdAt: now - (DEFAULT_GROUPS.length - i) * 1000,
+  }));
+  const groupThreads: Thread[] = groups.map((group, i) => ({
     id: `thread_${group.id}`,
-    type: "group",
+    type: "group" as const,
     targetId: group.id,
-    updatedAt: Date.now(),
-  };
+    updatedAt: now - i * 1000,
+  }));
   const botThreads: Thread[] = bots.map((b) => ({
     id: `thread_${b.id}`,
     type: "bot" as const,
     targetId: b.id,
-    updatedAt: Date.now() - 10_000,
+    updatedAt: now - 10_000,
   }));
 
   const settings: ApiSettings = {
     baseUrl: process.env.LLM_BASE_URL || "https://api.openai.com/v1",
     apiKey: process.env.LLM_API_KEY || "",
-    model: process.env.LLM_MODEL || "gpt-4o-mini",
+    model: process.env.LLM_MODEL || DEFAULT_LLM_MODEL,
     temperature: Number(process.env.LLM_TEMPERATURE || 0.7),
   };
 
   return {
     bots,
-    groups: [group],
-    threads: [...botThreads, groupThread],
+    groups,
+    threads: [...botThreads, ...groupThreads],
     messages: [] as ChatMessage[],
     settings,
   };
