@@ -24,4 +24,6 @@ Next.js App Router + TS + Tailwind；Zustand；开关 `NEXT_PUBLIC_USE_BACKEND=t
 
 status → speaker → token* → message_done → (handoff/activity) → done
 
+前后端如何接线、env 开关、abort、契约镜像同步：见 [BRIDGE.md](BRIDGE.md)。
+
 CONTRACT_VERSION **0.1.0**
