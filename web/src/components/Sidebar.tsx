@@ -101,7 +101,7 @@ export function Sidebar({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="搜索 Bot / 群组"
-            className="field w-full pl-9"
+            className="field has-leading-icon w-full"
           />
         </div>
         <div className="mt-2 flex gap-2">

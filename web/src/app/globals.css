@@ -96,6 +96,10 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.field.has-leading-icon {
+  padding-left: 2.25rem;
+}
+
 .field:focus {
   border-color: rgba(27, 143, 104, 0.45);
   box-shadow: 0 0 0 3px rgba(27, 143, 104, 0.12);
