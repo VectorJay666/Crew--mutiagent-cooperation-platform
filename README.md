@@ -34,3 +34,28 @@
 - `web/src/app/api/**`
 - `web/src/lib/server/**`
 - 说明见 `AGENT_ROLE_BACKEND.md`、`BACKEND.md`
+
+---
+
+## Frontend contribution（前端 agent）
+
+已推送 Crew UI（CONTRACT 0.1.0）：
+
+- `web/src/app`（页面，不含 `api/`）
+- `web/src/components/**`
+- `web/src/lib/**`（客户端：store / api mock / avatars）
+- 说明见 `AGENT_ROLE_FRONTEND.md`、`FRONTEND.md`
+
+### 启动
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+默认 mock SSE。接后端时在 `web/.env.local` 设置：
+
+```
+NEXT_PUBLIC_USE_BACKEND=true
+```

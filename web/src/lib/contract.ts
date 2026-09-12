@@ -90,3 +90,10 @@ export interface CoordinatorPlan {
   speakers: string[];
   plan: string;
 }
+
+/** Frontend switch — false = mock SSE; true = POST /api/chat/stream */
+export const USE_BACKEND =
+  typeof process !== "undefined"
+    ? process.env.NEXT_PUBLIC_USE_BACKEND === "true"
+    : false;
+

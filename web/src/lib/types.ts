@@ -90,3 +90,15 @@ export function botThreadId(botId: string): string {
 export function groupThreadId(groupId: string): string {
   return `thread_${groupId}`;
 }
+
+/** Frontend-only aggregate (not part of shared contract) */
+export interface AppState {
+  bots: Bot[];
+  groups: Group[];
+  threads: Thread[];
+  messages: ChatMessage[];
+  settings: ApiSettings;
+  activeThreadId: string | null;
+  hydrated: boolean;
+}
+

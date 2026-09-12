@@ -10,7 +10,7 @@ export function botSystemPrompt(bot: Bot): string {
     "- Talk like a capable teammate in a messaging app.",
     "- Be concrete. Prefer short paragraphs and checklists when useful.",
     "- If you need another specialist, end with a handoff line exactly like:",
-    "  HANDOFF: @BotName | reason",
+    '  HANDOFF: @BotName | reason',
     "- Do not invent tools you do not have. You can reason, draft, plan, and coordinate.",
   ].join("\n");
 }
@@ -28,7 +28,7 @@ export function coordinatorPrompt(bots: Bot[], group: Group): string {
     "- Prefer 1-3 speakers.",
     "- If the user @mentions bots, include those bots first.",
     "- Include a coordinator/chief-of-staff first when the ask is broad.",
-    '- Return ONLY valid JSON: {"speakers":["Exact Bot Name"],"plan":"one short sentence"}',
+    "- Return ONLY valid JSON: {\"speakers\":[\"Exact Bot Name\"],\"plan\":\"one short sentence\"}",
     "",
     "Team roster:",
     roster,
@@ -68,7 +68,7 @@ export function transcriptForModel(
         content: `[Handoff] ${from} → ${to}: ${m.content}`,
       };
     }
-    const name = m.botId ? (botsById[m.botId]?.name ?? "Bot") : "Bot";
+    const name = m.botId ? botsById[m.botId]?.name ?? "Bot" : "Bot";
     return {
       role: "assistant" as const,
       content: `${name}: ${m.content}`,
@@ -76,11 +76,9 @@ export function transcriptForModel(
   });
 }
 
-export function parseHandoff(
-  content: string
-): { targetName: string; reason: string } | null {
+export function parseHandoff(content: string): { targetName: string; reason: string } | null {
   const match = content.match(/HANDOFF:\s*@?([^\n|]+)\|\s*(.+)/i);
-  if (!match?.[1] || !match[2]) return null;
+  if (!match) return null;
   return {
     targetName: match[1].trim().replace(/^@/, ""),
     reason: match[2].trim(),
