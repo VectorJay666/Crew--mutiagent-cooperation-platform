@@ -5,7 +5,8 @@ import {
   coordinatorPrompt,
   extractMentions,
   groupBotPrompt,
-  parseHandoff,
+  isBroadcastIntent,
+  parseHandoffs,
   transcriptForModel,
 } from "../prompts";
 import { store } from "./store-io";
@@ -22,6 +23,9 @@ function resolveSettings(req: ChatStreamRequest): ApiSettings {
     temperature: fromReq?.temperature ?? saved.temperature ?? 0.7,
   };
 }
+
+const BROADCAST_SPEAKER_CAP = 8;
+const PLAN_DETAIL_MAX = 180;
 
 function heuristicSpeakers(members: Bot[], content: string): Bot[] {
   const lower = content.toLowerCase();
@@ -52,7 +56,74 @@ function heuristicSpeakers(members: Bot[], content: string): Bot[] {
   return members.slice(0, Math.min(2, members.length));
 }
 
-async function pickSpeakers(
+function allGroupSpeakers(members: Bot[]): Bot[] {
+  return members.slice(0, BROADCAST_SPEAKER_CAP);
+}
+
+export function maxGroupTurns(memberCount: number): number {
+  return Math.max(8, memberCount * 2);
+}
+
+function redactSecrets(text: string, apiKey?: string): string {
+  let s = text;
+  if (apiKey && apiKey.length > 3) {
+    s = s.split(apiKey).join("[redacted]");
+  }
+  s = s.replace(/sk-[a-zA-Z0-9_-]{8,}/g, "[redacted]");
+  s = s.replace(/Bearer\s+\S+/gi, "Bearer [redacted]");
+  return s.replace(/\s+/g, " ").trim();
+}
+
+/** Short, safe parenthetical for activity/plan. Never includes API keys. */
+export function describeCoordinatorFailure(
+  err: unknown,
+  apiKey?: string
+): string {
+  if (err instanceof LlmError) {
+    const body = redactSecrets(
+      err.message.replace(/^LLM error \(\d+\):\s*/i, ""),
+      apiKey
+    );
+    const extra = body ? ` / ${body.slice(0, 60)}` : "";
+    return `HTTP ${err.status}${extra}`;
+  }
+  if (err instanceof SyntaxError) return "invalid JSON";
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (/json|unexpected token|unexpected end/.test(msg)) return "invalid JSON";
+    return redactSecrets(err.message, apiKey).slice(0, 60) || "unknown error";
+  }
+  return "unknown error";
+}
+
+function logCoordinatorFailure(err: unknown, extra?: Record<string, unknown>) {
+  if (err instanceof LlmError) {
+    console.error("Coordinator failed", {
+      status: err.status,
+      body: err.message,
+      ...extra,
+    });
+    return;
+  }
+  console.error("Coordinator failed", err, extra ?? "");
+}
+
+function truncatePlan(plan: string): string {
+  const oneLine = plan.replace(/\s+/g, " ").trim();
+  return oneLine.length > PLAN_DETAIL_MAX
+    ? `${oneLine.slice(0, PLAN_DETAIL_MAX - 1)}…`
+    : oneLine;
+}
+
+function heuristicPlan(reason: string, speakers: Bot[]): string {
+  return truncatePlan(
+    `Coordinator failed (${reason}); heuristic: ${speakers
+      .map((s) => s.name)
+      .join(", ")}`
+  );
+}
+
+export async function pickSpeakers(
   members: Bot[],
   group: Group,
   content: string,
@@ -73,8 +144,16 @@ async function pickSpeakers(
 
   if (mentioned.length > 0) {
     return {
-      speakers: mentioned.slice(0, 3),
+      speakers: mentioned.slice(0, BROADCAST_SPEAKER_CAP),
       plan: `Honoring mentions: ${mentioned.map((m) => m.name).join(", ")}`,
+    };
+  }
+
+  if (isBroadcastIntent(content)) {
+    const speakers = allGroupSpeakers(members);
+    return {
+      speakers,
+      plan: "Broadcast: all members",
     };
   }
 
@@ -108,22 +187,32 @@ async function pickSpeakers(
       .filter((b): b is Bot => Boolean(b));
 
     if (speakers.length === 0) {
+      console.error("Coordinator returned no speakers", {
+        raw: String(raw).slice(0, 400),
+        parsed,
+      });
+      const fallback = heuristicSpeakers(members, content);
       return {
-        speakers: heuristicSpeakers(members, content),
-        plan: parsed.plan ?? "Fallback heuristic routing",
+        speakers: fallback,
+        plan: heuristicPlan(parsed.plan || "empty speakers", fallback),
       };
     }
+    const cap = isBroadcastIntent(content)
+      ? BROADCAST_SPEAKER_CAP
+      : 3;
     return {
-      speakers: speakers.slice(0, 3),
+      speakers: speakers.slice(0, cap),
       plan: parsed.plan ?? "Coordinator selected speakers",
     };
-  } catch {
+  } catch (err) {
+    logCoordinatorFailure(err);
     const speakers = heuristicSpeakers(members, content);
     return {
       speakers,
-      plan: `Coordinator failed; heuristic: ${speakers
-        .map((s) => s.name)
-        .join(", ")}`,
+      plan: heuristicPlan(
+        describeCoordinatorFailure(err, settings.apiKey),
+        speakers
+      ),
     };
   }
 }
@@ -281,24 +370,35 @@ export async function runChatStream(
       meta: { action: "routing", speakers: speakers.map((s) => s.name) },
     });
 
+    type WorkItem = { bot: Bot; handoffReason?: string };
+    const work: WorkItem[] = speakers.map((bot) => ({ bot }));
+    const queuedIds = new Set(speakers.map((s) => s.id));
     const spoken = new Set<string>();
     let previous = req.content;
+    let turns = 0;
+    const turnCap = maxGroupTurns(members.length);
 
-    for (const bot of speakers) {
+    while (work.length > 0) {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      if (turns >= turnCap) break;
+
+      const item = work.shift()!;
+      const bot = item.bot;
+      if (spoken.has(bot.id)) continue;
+
+      const userTurn = item.handoffReason
+        ? item.handoffReason
+        : previous === req.content
+          ? req.content
+          : `${req.content}\n\n(Context from teammates)\n${previous}`;
 
       emit({
         type: "status",
         botId: bot.id,
         status: "working",
-        action: `Working on: ${previous.slice(0, 42)}`,
+        action: item.handoffReason ?? `Working on: ${previous.slice(0, 42)}`,
       });
       emit({ type: "speaker", botId: bot.id, name: bot.name });
-
-      const userTurn =
-        previous === req.content
-          ? req.content
-          : `${req.content}\n\n(Context from teammates)\n${previous}`;
 
       const content = await generateReply(
         bot,
@@ -311,48 +411,35 @@ export async function runChatStream(
         signal
       );
       spoken.add(bot.id);
+      turns += 1;
 
-      const handoff = parseHandoff(content);
-      if (handoff) {
+      for (const hop of parseHandoffs(content)) {
+        if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
         const target = members.find(
-          (m) => m.name.toLowerCase() === handoff.targetName.toLowerCase()
+          (m) => m.name.toLowerCase() === hop.targetName.toLowerCase()
         );
-        if (target) {
-          emit({
-            type: "handoff",
-            fromBotId: bot.id,
-            toBotId: target.id,
-            reason: handoff.reason,
-          });
-          store.addMessage({
-            threadId,
-            kind: "handoff",
-            content: handoff.reason,
-            meta: { fromBotId: bot.id, toBotId: target.id },
-          });
+        if (!target) continue;
 
-          const alreadyQueued = speakers.some((s) => s.id === target.id);
-          if (!spoken.has(target.id) && !alreadyQueued) {
-            emit({
-              type: "status",
-              botId: target.id,
-              status: "working",
-              action: handoff.reason,
-            });
-            emit({ type: "speaker", botId: target.id, name: target.name });
-            await generateReply(
-              target,
-              groupBotPrompt(target, members),
-              modelHistory(threadId),
-              handoff.reason,
-              settings,
-              threadId,
-              emit,
-              signal
-            );
-            emit({ type: "status", botId: target.id, status: "idle" });
-            spoken.add(target.id);
-          }
+        emit({
+          type: "handoff",
+          fromBotId: bot.id,
+          toBotId: target.id,
+          reason: hop.reason,
+        });
+        store.addMessage({
+          threadId,
+          kind: "handoff",
+          content: hop.reason,
+          meta: { fromBotId: bot.id, toBotId: target.id },
+        });
+
+        if (
+          !spoken.has(target.id) &&
+          !queuedIds.has(target.id) &&
+          turns + work.length < turnCap
+        ) {
+          work.push({ bot: target, handoffReason: hop.reason });
+          queuedIds.add(target.id);
         }
       }
 

@@ -27,6 +27,7 @@ export function coordinatorPrompt(bots: Bot[], group: Group): string {
     "Rules:",
     "- Prefer 1-3 speakers.",
     "- If the user @mentions bots, include those bots first.",
+    "- If the user asks everyone to respond (e.g. 全员 / 所有人 / @everyone / remind everyone / 提醒全员), include ALL roster names in speakers.",
     "- Include a coordinator/chief-of-staff first when the ask is broad.",
     "- Return ONLY valid JSON: {\"speakers\":[\"Exact Bot Name\"],\"plan\":\"one short sentence\"}",
     "",
@@ -49,6 +50,7 @@ export function groupBotPrompt(bot: Bot, teammates: Bot[]): string {
     "",
     "You can see shared context. Do your part; hand off when another role should continue.",
     "When you hand off, use: HANDOFF: @BotName | reason",
+    "You may emit multiple HANDOFF lines (one per teammate) if several roles should continue.",
   ].join("\n");
 }
 
@@ -76,13 +78,31 @@ export function transcriptForModel(
   });
 }
 
-export function parseHandoff(content: string): { targetName: string; reason: string } | null {
-  const match = content.match(/HANDOFF:\s*@?([^\n|]+)\|\s*(.+)/i);
-  if (!match) return null;
-  return {
-    targetName: match[1].trim().replace(/^@/, ""),
-    reason: match[2].trim(),
-  };
+export type HandoffHop = { targetName: string; reason: string };
+
+/** All HANDOFF lines in document order. */
+export function parseHandoffs(content: string): HandoffHop[] {
+  const hops: HandoffHop[] = [];
+  const re = /HANDOFF:\s*@?([^\n|]+?)\s*\|\s*([^\n]+)/gi;
+  for (const match of content.matchAll(re)) {
+    const targetName = match[1].trim().replace(/^@/, "");
+    const reason = match[2].trim();
+    if (targetName && reason) hops.push({ targetName, reason });
+  }
+  return hops;
+}
+
+/** First HANDOFF line, or null. Wrapper around parseHandoffs. */
+export function parseHandoff(content: string): HandoffHop | null {
+  return parseHandoffs(content)[0] ?? null;
+}
+
+const BROADCAST_RE =
+  /提醒全员|全员|所有人|@everyone|remind\s+everyone/i;
+
+/** User wants every group member to respond (mentions still override at the caller). */
+export function isBroadcastIntent(content: string): boolean {
+  return BROADCAST_RE.test(content);
 }
 
 export function extractMentions(text: string, bots: Bot[]): Bot[] {
