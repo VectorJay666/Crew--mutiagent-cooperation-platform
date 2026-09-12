@@ -80,7 +80,7 @@ npm run dev
 
   期望类似：`{"ok":true,"version":"0.1.0","contractVersion":"0.1.0"}`。
 
-停生成：输入框右侧发送按钮在流式过程中会变成 **停止（方块）**，会 `AbortController.abort()` 取消本次 fetch。
+停生成：输入框右侧发送按钮在流式过程中会变成 **停止（方块）**，会 `AbortController.abort()` 取消本次 fetch。评审录屏（open → chat → stop）：[demo/README.md](demo/README.md)。
 
 ---
 
