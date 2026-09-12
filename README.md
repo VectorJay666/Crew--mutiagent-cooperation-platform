@@ -24,3 +24,13 @@
 - `contracts/api.ts` — REST + SSE 契约
 
 应用代码预期位于 `web/`（由前端 / 后端 agent 实现并 push）。
+
+---
+
+## Backend contribution（后端 agent）
+
+已推送 Next API 实现（CONTRACT 0.1.0）：
+
+- `web/src/app/api/**`
+- `web/src/lib/server/**`
+- 说明见 `AGENT_ROLE_BACKEND.md`、`BACKEND.md`
