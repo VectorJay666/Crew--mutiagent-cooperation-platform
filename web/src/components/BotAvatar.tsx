@@ -3,23 +3,20 @@
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { COLOR_MAP } from "@/lib/avatars";
-import type { Bot, BotStatus } from "@/lib/types";
-
-const ACCESSORIES = ["✦", "◆", "◎", "▴", "◌", "✚"];
+import type { Bot, BotColor, BotStatus } from "@/lib/types";
 
 export function BotAvatar({
   bot,
   size = 40,
-  showStatus = true,
   className,
 }: {
   bot: Pick<Bot, "name" | "color" | "accessory" | "status" | "currentAction">;
   size?: number;
+  /** Kept for callers; status lives in sidebar text, not as an avatar badge. */
   showStatus?: boolean;
   className?: string;
 }) {
   const palette = COLOR_MAP[bot.color];
-  const accessory = ACCESSORIES[bot.accessory % ACCESSORIES.length];
   const anim = statusAnim(bot.status);
 
   return (
@@ -32,14 +29,10 @@ export function BotAvatar({
         className="relative h-full w-full overflow-hidden rounded-full"
         style={{
           background: `radial-gradient(circle at 30% 28%, ${palette.face}, ${palette.cheek})`,
-          boxShadow: bot.status === "working" || bot.status === "thinking"
-            ? `0 0 0 3px ${palette.glow}`
-            : undefined,
         }}
         animate={anim.face}
         transition={anim.transition}
       >
-        {/* eyes */}
         <motion.div
           className="absolute left-[28%] top-[38%] h-[18%] w-[14%] rounded-full"
           style={{ background: palette.eye }}
@@ -50,41 +43,59 @@ export function BotAvatar({
           style={{ background: palette.eye }}
           animate={anim.eyes}
         />
-        {/* accessory */}
-        <div
-          className="absolute right-[6%] top-[8%] text-[10px] leading-none opacity-90"
-          style={{ fontSize: Math.max(9, size * 0.22), color: palette.eye }}
-        >
-          {accessory}
-        </div>
       </motion.div>
-
-      {showStatus && bot.status !== "idle" && (
-        <span
-          className={clsx(
-            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--surface)]",
-            statusDot(bot.status)
-          )}
-        />
-      )}
     </div>
   );
 }
 
-function statusDot(status: BotStatus) {
-  switch (status) {
-    case "working":
-    case "thinking":
-      return "bg-[var(--accent)] animate-pulse";
-    case "waiting":
-      return "bg-[var(--warn)]";
-    case "blocked":
-      return "bg-[var(--danger)]";
-    case "done":
-      return "bg-[var(--accent)]";
-    default:
-      return "bg-[var(--muted)]";
-  }
+/** 2×2 member-color collage, circular clip, no frame / shadow / hairline seams. */
+export function GroupCollage({
+  bots,
+  size = 40,
+  className,
+  title,
+}: {
+  bots: Pick<Bot, "color">[];
+  size?: number;
+  className?: string;
+  title?: string;
+}) {
+  const tiles = collageTiles(bots);
+
+  return (
+    <div
+      className={clsx("relative shrink-0 overflow-hidden rounded-full", className)}
+      style={{
+        width: size,
+        height: size,
+        background: COLOR_MAP[tiles[0]].cheek,
+      }}
+      title={title}
+    >
+      <div className="group-collage-grid">
+        {tiles.map((color, i) => {
+          const palette = COLOR_MAP[color];
+          return (
+            <div
+              key={`${color}-${i}`}
+              style={{
+                background: `linear-gradient(160deg, ${palette.face} 0%, ${palette.cheek} 100%)`,
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function collageTiles(bots: Pick<Bot, "color">[]): BotColor[] {
+  const colors = bots.map((b) => b.color);
+  if (colors.length === 0) return ["slate", "slate", "slate", "slate"];
+  if (colors.length === 1) return [colors[0], colors[0], colors[0], colors[0]];
+  if (colors.length === 2) return [colors[0], colors[1], colors[0], colors[1]];
+  if (colors.length === 3) return [colors[0], colors[1], colors[2], colors[0]];
+  return colors.slice(0, 4);
 }
 
 function statusAnim(status: BotStatus) {

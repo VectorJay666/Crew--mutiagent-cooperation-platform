@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { BOT_COLORS } from "@/lib/avatars";
+import { USE_BACKEND } from "@/lib/contract";
 import { useAppStore } from "@/lib/store";
 import type { BotColor } from "@/lib/types";
 import { BotAvatar } from "./BotAvatar";
@@ -118,9 +119,20 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
           </label>
         </div>
         <p className="rounded-2xl bg-[var(--chip)] px-3 py-2 text-xs leading-relaxed text-[var(--muted)]">
-          前端会把这些配置随 <code className="text-[var(--ink-soft)]">POST /api/chat/stream</code>{" "}
-          传给后端。当前默认是本地演示流；后端 agent 接好后设{" "}
-          <code className="text-[var(--ink-soft)]">NEXT_PUBLIC_USE_BACKEND=true</code>。
+          {USE_BACKEND ? (
+            <>
+              这些配置会随 <code className="text-[var(--ink-soft)]">POST /api/chat/stream</code>{" "}
+              传给后端。当前已开启后端模式（
+              <code className="text-[var(--ink-soft)]">NEXT_PUBLIC_USE_BACKEND=true</code>
+              ）。
+            </>
+          ) : (
+            <>
+              前端会把这些配置随 <code className="text-[var(--ink-soft)]">POST /api/chat/stream</code>{" "}
+              传给后端。当前默认是本地演示流；后端 agent 接好后设{" "}
+              <code className="text-[var(--ink-soft)]">NEXT_PUBLIC_USE_BACKEND=true</code>。
+            </>
+          )}
         </p>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="btn-secondary" onClick={onClose}>

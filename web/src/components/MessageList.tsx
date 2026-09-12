@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { BotAvatar } from "./BotAvatar";
@@ -8,9 +8,14 @@ import { useAppStore } from "@/lib/store";
 import { COLOR_MAP } from "@/lib/avatars";
 import type { ChatMessage } from "@/lib/types";
 
-export function MessageList({ threadId }: { threadId: string }) {
+export function MessageList({
+  threadId,
+  streamingIds = [],
+}: {
+  threadId: string;
+  streamingIds?: string[];
+}) {
   const messages = useAppStore((s) => s.messages);
-  const bots = useAppStore((s) => s.bots);
   const list = useMemo(
     () =>
       messages
@@ -35,7 +40,7 @@ export function MessageList({ threadId }: { threadId: string }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22 }}
             >
-              <MessageBubble message={m} />
+              <MessageBubble message={m} streaming={streamingIds.includes(m.id)} />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -51,7 +56,52 @@ function displayContent(content: string) {
     .trim();
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function StreamBody({ content, streaming }: { content: string; streaming: boolean }) {
+  const visible = displayContent(content);
+  const prevRef = useRef(visible);
+  const [committed, setCommitted] = useState(visible);
+
+  useEffect(() => {
+    if (!streaming) {
+      setCommitted(visible);
+      prevRef.current = visible;
+      return;
+    }
+    if (visible.startsWith(prevRef.current)) {
+      setCommitted(prevRef.current);
+    } else {
+      setCommitted(visible);
+    }
+    prevRef.current = visible;
+  }, [visible, streaming]);
+
+  if (!visible && !streaming) {
+    return <p className="whitespace-pre-wrap">…</p>;
+  }
+
+  const head = streaming ? committed : visible;
+  const tail = streaming && visible.startsWith(head) ? visible.slice(head.length) : "";
+
+  return (
+    <p className="whitespace-pre-wrap">
+      <span>{head}</span>
+      {tail ? (
+        <span className="stream-token" key={`${head.length}:${tail.length}`}>
+          {tail}
+        </span>
+      ) : null}
+      {streaming ? <span className="stream-caret" aria-hidden /> : null}
+    </p>
+  );
+}
+
+function MessageBubble({
+  message,
+  streaming = false,
+}: {
+  message: ChatMessage;
+  streaming?: boolean;
+}) {
   const bots = useAppStore((s) => s.bots);
 
   if (message.kind === "activity") {
@@ -116,7 +166,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           className="rounded-3xl rounded-tl-lg px-4 py-3 text-[15px] leading-relaxed text-[var(--ink)] shadow-[var(--shadow-soft)]"
           style={{ background: soft }}
         >
-          <p className="whitespace-pre-wrap">{displayContent(message.content) || "…"}</p>
+          <StreamBody content={message.content} streaming={streaming} />
         </div>
       </div>
     </div>

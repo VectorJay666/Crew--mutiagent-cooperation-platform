@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Trash2, Users } from "lucide-react";
-import { BotAvatar } from "./BotAvatar";
+import { BotAvatar, GroupCollage } from "./BotAvatar";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { streamChat } from "@/lib/api";
@@ -25,6 +25,7 @@ export function ChatPanel() {
   const clearThread = useAppStore((s) => s.clearThread);
 
   const [sending, setSending] = useState(false);
+  const [liveMessageIds, setLiveMessageIds] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const streamingIds = useRef<Record<string, string>>({});
 
@@ -41,6 +42,7 @@ export function ChatPanel() {
     if (!thread || sending) return;
     setSending(true);
     streamingIds.current = {};
+    setLiveMessageIds([]);
 
     addMessage({
       threadId: thread.id,
@@ -76,6 +78,7 @@ export function ChatPanel() {
       }
     } finally {
       setSending(false);
+      setLiveMessageIds([]);
       abortRef.current = null;
       members.forEach((m) => setBotStatus(m.id, "idle"));
     }
@@ -89,6 +92,7 @@ export function ChatPanel() {
       case "speaker": {
         const id = `msg_${nanoid(10)}`;
         streamingIds.current[event.botId] = id;
+        setLiveMessageIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
         addMessage({
           id,
           threadId,
@@ -107,6 +111,7 @@ export function ChatPanel() {
         const id = streamingIds.current[event.botId] ?? event.messageId;
         updateMessage(id, { content: event.content });
         streamingIds.current[event.botId] = id;
+        setLiveMessageIds((ids) => ids.filter((x) => x !== id));
         break;
       }
       case "handoff":
@@ -150,13 +155,7 @@ export function ChatPanel() {
       <header className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3 backdrop-blur-xl md:px-6">
         <div className="flex min-w-0 items-center gap-3">
           {bot && <BotAvatar bot={bot} size={44} />}
-          {group && (
-            <div className="flex -space-x-2">
-              {members.slice(0, 4).map((m) => (
-                <BotAvatar key={m.id} bot={m} size={34} className="ring-2 ring-[var(--surface)]" />
-              ))}
-            </div>
-          )}
+          {group && <GroupCollage bots={members} size={44} title={group.name} />}
           <div className="min-w-0">
             <h1 className="truncate font-[family-name:var(--font-display)] text-lg text-[var(--ink)]">
               {bot?.name ?? group?.name}
@@ -190,7 +189,7 @@ export function ChatPanel() {
       </header>
 
       {messages.some((m) => m.threadId === thread.id) ? (
-        <MessageList threadId={thread.id} />
+        <MessageList threadId={thread.id} streamingIds={liveMessageIds} />
       ) : (
         <EmptyHero
           title={bot?.name ?? group?.name ?? "Crew"}
@@ -209,7 +208,10 @@ export function ChatPanel() {
           bot ? `给 ${bot.name} 发消息…` : `给 ${group?.name ?? "团队"} 布置任务，用 @ 点名…`
         }
         onSend={handleSend}
-        onStop={() => abortRef.current?.abort()}
+        onStop={() => {
+          setLiveMessageIds([]);
+          abortRef.current?.abort();
+        }}
       />
     </section>
   );
