@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test src/lib/prompts.test.ts src/lib/server/orchestrator.test.ts"
+    "test": "tsx --test src/lib/prompts.test.ts src/lib/server/orchestrator.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -28,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }
