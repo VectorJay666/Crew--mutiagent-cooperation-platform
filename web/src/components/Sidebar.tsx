@@ -11,7 +11,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import clsx from "clsx";
-import { BotAvatar } from "./BotAvatar";
+import { BotAvatar, GroupCollage } from "./BotAvatar";
 import { useAppStore } from "@/lib/store";
 import type { Bot, Group, Thread } from "@/lib/types";
 
@@ -133,17 +133,7 @@ export function Sidebar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                 >
-                  <div className="relative h-10 w-10 shrink-0">
-                    {memberBots.slice(0, 3).map((b, i) => (
-                      <div
-                        key={b.id}
-                        className="absolute"
-                        style={{ left: i * 10, top: i * 4, zIndex: 3 - i }}
-                      >
-                        <BotAvatar bot={b} size={24} showStatus={false} />
-                      </div>
-                    ))}
-                  </div>
+                  <GroupCollage bots={memberBots} size={40} title={item.group.name} />
                   <div className="min-w-0 flex-1 text-left">
                     <div className="flex items-center gap-1.5">
                       <Users size={12} className="text-[var(--accent)]" />

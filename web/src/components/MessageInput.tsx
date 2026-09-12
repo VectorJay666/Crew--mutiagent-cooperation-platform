@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { AtSign, SendHorizontal, Square } from "lucide-react";
 import clsx from "clsx";
 import type { Bot } from "@/lib/types";
+import { USE_BACKEND } from "@/lib/contract";
 
 export function MessageInput({
   disabled,
@@ -129,7 +130,9 @@ export function MessageInput({
           )}
         </div>
         <p className="mt-2 px-2 text-[11px] text-[var(--muted)]">
-          Enter 发送 · Shift+Enter 换行 · 前端演示模式可直接体验协作流，后端接入后自动走真实模型
+          {USE_BACKEND
+            ? "Enter 发送 · Shift+Enter 换行 · 已连接后端，流式回复走真实模型"
+            : "Enter 发送 · Shift+Enter 换行 · 前端演示模式可直接体验协作流，后端接入后自动走真实模型"}
         </p>
       </div>
     </div>

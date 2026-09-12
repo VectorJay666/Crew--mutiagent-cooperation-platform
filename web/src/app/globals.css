@@ -193,3 +193,39 @@ code {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
+.stream-token {
+  animation: stream-token-in 0.14s ease-out;
+}
+
+@keyframes stream-token-in {
+  from {
+    opacity: 0.42;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stream-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 3px;
+  margin-bottom: -0.16em;
+  vertical-align: baseline;
+  border-radius: 1px;
+  background: var(--accent);
+  box-shadow: -5px 0 8px -1px rgba(27, 143, 104, 0.28);
+  animation: stream-caret 0.65s ease-in-out infinite;
+}
+
+@keyframes stream-caret {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
