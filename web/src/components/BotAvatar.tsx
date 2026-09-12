@@ -72,19 +72,24 @@ export function GroupCollage({
       }}
       title={title}
     >
-      <div className="group-collage-grid">
-        {tiles.map((color, i) => {
-          const palette = COLOR_MAP[color];
-          return (
-            <div
-              key={`${color}-${i}`}
-              style={{
-                background: `linear-gradient(160deg, ${palette.face} 0%, ${palette.cheek} 100%)`,
-              }}
-            />
-          );
-        })}
-      </div>
+      {tiles.map((color, i) => {
+        const palette = COLOR_MAP[color];
+        const top = i < 2;
+        const left = i % 2 === 0;
+        return (
+          <div
+            key={`${color}-${i}`}
+            className="absolute"
+            style={{
+              top: top ? 0 : "49%",
+              left: left ? 0 : "49%",
+              width: "51%",
+              height: "51%",
+              background: `linear-gradient(160deg, ${palette.face} 0%, ${palette.cheek} 100%)`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -194,16 +194,6 @@ code {
   background-clip: padding-box;
 }
 
-/* Group collage: bleed tiles past the circular clip so grid lines never read as a white crosshair. */
-.group-collage-grid {
-  position: absolute;
-  inset: -1px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 0;
-}
-
 .stream-token {
   animation: stream-token-in 0.14s ease-out;
 }
