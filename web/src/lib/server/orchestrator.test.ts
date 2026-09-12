@@ -35,6 +35,16 @@ describe("describeCoordinatorFailure", () => {
     assert.match(detail, /\[redacted\]/);
   });
 
+  it("summarizes JSON provider errors instead of dumping the body", () => {
+    const err = new LlmError(
+      'LLM error (401): {"error":"invalid_api_key","message":"Incorrect API key provided: sk-SHOULDNOTLEAK"}',
+      401
+    );
+    const detail = describeCoordinatorFailure(err, "sk-FAKESECRET_c3d4e5f6g7h8i9j0k1l2");
+    assert.equal(detail, "HTTP 401 / invalid_api_key");
+    assert.doesNotMatch(detail, /sk-/);
+  });
+
   it("labels JSON parse failures", () => {
     assert.equal(
       describeCoordinatorFailure(new SyntaxError("Unexpected token")),

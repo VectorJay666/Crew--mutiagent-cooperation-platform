@@ -74,17 +74,41 @@ function redactSecrets(text: string, apiKey?: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
+function shortLlmBody(body: string, apiKey?: string): string {
+  const clean = redactSecrets(body, apiKey);
+  try {
+    const parsed = JSON.parse(clean) as Record<string, unknown>;
+    const err = parsed.error;
+    if (typeof err === "string" && err.trim()) return err.trim().slice(0, 60);
+    if (err && typeof err === "object") {
+      const o = err as Record<string, unknown>;
+      const code =
+        typeof o.code === "string"
+          ? o.code
+          : typeof o.type === "string"
+            ? o.type
+            : "";
+      const msg = typeof o.message === "string" ? o.message : "";
+      const joined = [code, msg].filter(Boolean).join(": ");
+      if (joined) return redactSecrets(joined, apiKey).slice(0, 60);
+    }
+    if (typeof parsed.message === "string" && parsed.message.trim()) {
+      return redactSecrets(parsed.message, apiKey).slice(0, 60);
+    }
+  } catch {
+    // plain text body
+  }
+  return clean.slice(0, 60);
+}
+
 /** Short, safe parenthetical for activity/plan. Never includes API keys. */
 export function describeCoordinatorFailure(
   err: unknown,
   apiKey?: string
 ): string {
   if (err instanceof LlmError) {
-    const body = redactSecrets(
-      err.message.replace(/^LLM error \(\d+\):\s*/i, ""),
-      apiKey
-    );
-    const extra = body ? ` / ${body.slice(0, 60)}` : "";
+    const body = err.message.replace(/^LLM error \(\d+\):\s*/i, "");
+    const extra = body ? ` / ${shortLlmBody(body, apiKey)}` : "";
     return `HTTP ${err.status}${extra}`;
   }
   if (err instanceof SyntaxError) return "invalid JSON";
