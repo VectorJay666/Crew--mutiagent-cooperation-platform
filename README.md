@@ -89,7 +89,7 @@ npm run dev
 3. 打开页面后，点左侧栏标题旁的 **齿轮（Settings）**，弹出「连接你的模型」：
    - **Base URL**：OpenAI 兼容地址，默认 `https://api.openai.com/v1`
    - **API Key**：你的密钥（`sk-...` 或供应商提供的 key）
-   - **Model**：如 `gpt-4o-mini`
+   - **Model**：如 `DeepSeek-V4-Flash-Vision-Exp`。LiteLLM 可用模型会变；当前建议默认该 id，不通再换列表里别的。
    - **Temperature**：可选，默认 `0.7`
    - 点 **保存**。配置写入浏览器本地 Zustand（key：`crew-bot-store-v1`），发消息时随 `POST /api/chat/stream` 的 `settings` 传给后端。
 
