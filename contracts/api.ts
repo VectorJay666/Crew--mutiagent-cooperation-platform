@@ -1,6 +1,7 @@
 ﻿/**
  * Crew REST + SSE contract — CONTRACT_VERSION 0.1.0
  * Owned by: structure agent (bc-01a09353-11eb-7d26-8a69-be99b08ba7ef)
+ * FE/BE wiring (env switch, SSE order, abort, mirror sync): docs/BRIDGE.md
  */
 
 import type { ApiSettings, Bot, ChatMessage, Group, Thread } from "./types";

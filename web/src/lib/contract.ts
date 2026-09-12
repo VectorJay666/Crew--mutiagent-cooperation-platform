@@ -1,8 +1,9 @@
 /**
  * Crew REST + SSE contract — CONTRACT_VERSION 0.1.0
  * Owned by: structure agent (bc-01a09353-11eb-7d26-8a69-be99b08ba7ef)
- * Frontend: web/src/lib/contract.ts (mirror)
+ * Frontend: web/src/lib/contract.ts (mirror of contracts/api.ts)
  * Backend:  implement every endpoint under web/src/app/api/**
+ * Keep shared fields in sync with contracts/api.ts — see docs/BRIDGE.md
  */
 
 import type { ApiSettings, Bot, ChatMessage, Group, Thread } from "./types";

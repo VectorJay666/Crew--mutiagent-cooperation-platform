@@ -1,61 +1,133 @@
-﻿# Crew — mutiagent cooperation platform
+﻿# Crew
 
-本地 Grok Bot 风格多智能体团队协作网页。
+本地 Grok Bot 风格多智能体协作网页；自备 OpenAI 兼容 API。
 
-## 本推送来自：**结构 agent（structure）**
-
-| 字段 | 值 |
-|------|-----|
-| 角色 | **结构 / structure** |
-| Agent | grok bot 结构 |
-| bcId | `bc-01a09353-11eb-7d26-8a69-be99b08ba7ef` |
-| 契约 | CONTRACT_VERSION **0.1.0** |
-
-本目录提供权威契约与协作协议；前端 / 后端请分别 push 各自实现到本仓。
-
-## 内容
-
-- `AGENT_ROLE.md` — 标明本提交来自结构 agent
-- `docs/STRUCTURE.md` — 目录与归属
-- `docs/AGENT_PROTOCOL.md` — 三方协作协议
-- `docs/HANDOFF.md` — 给前端/后端的交接
-- `docs/SYNC_2026-09-12.md` — 同步裁决记录
-- `contracts/types.ts` — 共享领域类型
-- `contracts/api.ts` — REST + SSE 契约
-
-应用代码预期位于 `web/`（由前端 / 后端 agent 实现并 push）。
+契约版本：**CONTRACT_VERSION 0.1.0**（不要擅自改版本号）。
 
 ---
 
-## Backend contribution（后端 agent）
+## 安装与使用
 
-已推送 Next API 实现（CONTRACT 0.1.0）：
+这是本仓库最重要的部分。照着做即可在本机跑起来。
 
-- `web/src/app/api/**`
-- `web/src/lib/server/**`
-- 说明见 `AGENT_ROLE_BACKEND.md`、`BACKEND.md`
+### 环境要求
 
----
+| 项 | 要求 |
+|----|------|
+| Node.js | **≥ 20.9**（`web/package.json` 未写 `engines`；应用使用 Next.js 16，官方最低要求为 Node 20.9） |
+| 包管理器 | **npm**（仓库带 `web/package-lock.json`） |
+| 浏览器 | 现代桌面浏览器 |
 
-## Frontend contribution（前端 agent）
+不需要 Docker。Mock 模式不需要任何 API Key。
 
-已推送 Crew UI（CONTRACT 0.1.0）：
-
-- `web/src/app`（页面，不含 `api/`）
-- `web/src/components/**`
-- `web/src/lib/**`（客户端：store / api mock / avatars）
-- 说明见 `AGENT_ROLE_FRONTEND.md`、`FRONTEND.md`
-
-### 启动
+### 安装步骤
 
 ```bash
-cd web
+git clone https://github.com/VectorJay666/Crew--mutiagent-cooperation-platform.git
+cd Crew--mutiagent-cooperation-platform/web
 npm install
+```
+
+可选：复制环境变量模板（默认就是 Mock，可不改）：
+
+```bash
+cp .env.example .env.local
+```
+
+`web/.env.example` 里目前只有前端开关；服务端 LLM 变量见该文件注释。
+
+### 两种模式
+
+#### 1. Mock（默认）— 不需要真实 API Key
+
+```bash
 npm run dev
 ```
 
-默认 mock SSE。接后端时在 `web/.env.local` 设置：
+浏览器打开 **http://localhost:3000**（`package.json` 的 `dev` 脚本是 `next dev`，默认端口 3000）。
 
-```
-NEXT_PUBLIC_USE_BACKEND=true
-```
+此时 `NEXT_PUBLIC_USE_BACKEND` 不为 `true`，前端走本地 mock SSE（`web/src/lib/api.ts` 的 `streamMock`），即可体验花名册、群组交接和打字机效果。
+
+#### 2. 接后端 — 走真实编排 + OpenAI 兼容模型
+
+1. 在 `web/.env.local` 设置：
+
+   ```
+   NEXT_PUBLIC_USE_BACKEND=true
+   ```
+
+2. **必须重启** `npm run dev`。`NEXT_PUBLIC_*` 在 Next 启动时打进客户端包，改完不重启等于没改。
+
+3. 打开页面后，点左侧栏标题旁的 **齿轮（Settings）**，弹出「连接你的模型」：
+   - **Base URL**：OpenAI 兼容地址，默认 `https://api.openai.com/v1`
+   - **API Key**：你的密钥（`sk-...` 或供应商提供的 key）
+   - **Model**：如 `gpt-4o-mini`
+   - **Temperature**：可选，默认 `0.7`
+   - 点 **保存**。配置写入浏览器本地 Zustand（key：`crew-bot-store-v1`），发消息时随 `POST /api/chat/stream` 的 `settings` 传给后端。
+
+4. 也可在 `.env.local` 写服务端兜底（请求体没带齐时用）：`LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` / `LLM_TEMPERATURE`。
+
+### 验证
+
+任选其一即可：
+
+- 打开 http://localhost:3000，选一个 Bot 或群组，**发一条消息**。Mock 应立刻出现流式回复；接后端时应看到 thinking / 打字机，或明确的缺 Key / 上游错误提示。
+- 接后端时，浏览器或终端访问健康检查：
+
+  ```bash
+  curl http://localhost:3000/api/health
+  ```
+
+  期望类似：`{"ok":true,"version":"0.1.0","contractVersion":"0.1.0"}`。
+
+停生成：输入框右侧发送按钮在流式过程中会变成 **停止（方块）**，会 `AbortController.abort()` 取消本次 fetch。
+
+---
+
+## 目录归属
+
+| 路径 | 归属 | 做什么 |
+|------|------|--------|
+| `contracts/` | 结构 / 契约 | 权威类型与 REST+SSE。`types.ts` 领域模型；`api.ts` 端点与 `StreamEvent` |
+| `web/src/components/` | 前端 | UI：Sidebar、ChatPanel、Settings 弹窗、输入框 |
+| `web/src/app/`（不含 `api/`） | 前端 | Next 页面与布局 |
+| `web/src/lib/`（客户端） | 前端 | `api.ts`（`streamChat`）、Zustand `store.ts`、契约镜像 |
+| `web/src/app/api/` + `web/src/lib/server/` | 后端 | health / settings / CRUD / `chat/stream`、编排、LLM 代理 |
+
+前端↔后端怎么连、SSE 顺序、停流、契约同步：**[docs/BRIDGE.md](docs/BRIDGE.md)**。
+
+---
+
+## 团队分工
+
+| 角色 | 职责 |
+|------|------|
+| **Cons** | 前后端衔接 / 契约（开关、SSE、health、`contracts/` 与 `web/src/lib/contract.ts` 对齐） |
+| **Skills** | 编排与 Skill（`web/src/lib/server/orchestrator.ts`、prompt、handoff） |
+| **Demo** | 演示（Mock 流、种子 Bot/群组、可截图路径） |
+| **Test** | 验收（health、发消息、mock↔backend 切换、停止取消 fetch） |
+| **Crea** | 叙事文案（产品一句话、空状态、Bot 人设） |
+| **Vector** | 终审 |
+
+历史三角色文档仍有效，请勿删除：
+
+- [AGENT_ROLE.md](AGENT_ROLE.md)（结构）
+- [AGENT_ROLE_FRONTEND.md](AGENT_ROLE_FRONTEND.md)
+- [AGENT_ROLE_BACKEND.md](AGENT_ROLE_BACKEND.md)
+- [docs/STRUCTURE.md](docs/STRUCTURE.md) · [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md) · [docs/HANDOFF.md](docs/HANDOFF.md)
+
+---
+
+## 已知限制 / 故障排查
+
+| 现象 | 怎么处理 |
+|------|----------|
+| 改了 `.env.local` 没效果 | `NEXT_PUBLIC_*` 需**重启** `npm run dev`。确认文件在 `web/.env.local`，不是仓库根目录。 |
+| 接了后端但回复像演示稿 / 提示未配置 Key | Settings 里填 **API Key** 并保存；或设 `LLM_API_KEY`。空 Key 时后端仍会回一段说明文字，不会去打模型。 |
+| CORS / 浏览器拦跨域 | 页面与 `/api/*` 是**同源** Next 路由，正常本地开发不会 CORS。LLM 由**服务端**代理。若把前端和 API 拆到不同域名，需自配 CORS；不要在浏览器里直连第三方 `baseUrl`（会泄 Key + 容易 CORS）。 |
+| SSE 断流、回复停在半句 | 点停止、刷新、网络抖动或代理超时都可能掐流。点停止会 abort fetch，属预期。重发一条即可。长回复若经反向代理，需加大 read timeout。 |
+| `GET /api/health` 失败 | 先确认 `npm run dev` 已起来且端口是 **3000**。health 不依赖 API Key。 |
+| Mock / 后端行为对不上 | 看 `web/.env.local` 的 `NEXT_PUBLIC_USE_BACKEND`。`false` 或不存在 = Mock；只有字符串 `true` 才走后端。 |
+| 设置保存后刷新还在 | 正常：存在 `localStorage` 的 `crew-bot-store-v1`。清站点数据会丢掉 bots / 对话 / settings。 |
+
+更细的衔接说明与 Cons 验收清单见 [docs/BRIDGE.md](docs/BRIDGE.md)。
